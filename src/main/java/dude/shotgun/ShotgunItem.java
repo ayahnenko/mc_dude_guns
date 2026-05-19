@@ -41,6 +41,10 @@ public class ShotgunItem extends Item {
 
     private static final int COOLDOWN_TICKS = 20;
 
+    private static final double KNOCKBACK_PER_DAMAGE = 0.04;
+    private static final double MIN_KNOCKBACK = 0.25;
+    private static final double MAX_KNOCKBACK = 1.2;
+
     public ShotgunItem(Properties properties) {
         super(properties);
     }
@@ -136,12 +140,19 @@ public class ShotgunItem extends Item {
 
         for (Map.Entry<LivingEntity, Float> entry : damageByTarget.entrySet()) {
             LivingEntity target = entry.getKey();
+            float totalDamage = entry.getValue();
 
-            target.hurtServer(
+            boolean damaged = target.hurtServer(
                     level,
                     level.damageSources().playerAttack(user),
                     entry.getValue()
             );
+
+            if (!damaged) {
+                continue;
+            }
+
+            applyShotgunKnockback(user, target, totalDamage);
 
             Vec3 hitPosition = hitPositionByTarget.getOrDefault(
                     target,
@@ -380,6 +391,17 @@ public class ShotgunItem extends Item {
                 0.04,
                 0.04,
                 0.01
+        );
+    }
+
+    private void applyShotgunKnockback(Player user, LivingEntity target, float totalDamage) {
+        double strength = totalDamage * KNOCKBACK_PER_DAMAGE;
+        strength = Math.clamp(strength, MIN_KNOCKBACK, MAX_KNOCKBACK);
+
+        target.knockback(
+                strength,
+                user.getX() - target.getX(),
+                user.getZ() - target.getZ()
         );
     }
 
