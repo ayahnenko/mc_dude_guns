@@ -19,6 +19,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +69,12 @@ public class ShotgunItem extends Item {
                     1.0f,
                     1.0f
             );
+
+            user.swing(hand, true);
+
+            if (user instanceof ServerPlayer serverPlayer) {
+                damageShotgun(serverLevel, serverPlayer, hand);
+            }
         }
 
         user.getCooldowns().addCooldown(user.getItemInHand(hand), COOLDOWN_TICKS);
@@ -102,6 +110,7 @@ public class ShotgunItem extends Item {
         spawnMuzzleParticles(level, muzzleStart, baseDirection);
 
         Map<LivingEntity, Float> damageByTarget = new HashMap<>();
+        Map<LivingEntity, Vec3> hitPositionByTarget = new HashMap<>();
         int pelletHits = 0;
 
         for (int i = 0; i < PELLET_COUNT; i++) {
@@ -110,21 +119,43 @@ public class ShotgunItem extends Item {
 
             spawnPelletTracers(level, start, direction, trace.visualDistance());
             if (trace.hit().isEmpty()) {
+                trace.blockImpact().ifPresent(position -> spawnBlockImpactParticles(level, position));
                 continue;
             }
 
             PelletHit hit = trace.hit().get();
+            spawnEntityHitParticles(level, hit.position());
+
             float damage = calculateDamage(hit.distance());
 
             damageByTarget.merge(hit.target(), damage, Float::sum);
+            hitPositionByTarget.putIfAbsent(hit.target(), hit.position());
             pelletHits++;
         }
 
         for (Map.Entry<LivingEntity, Float> entry : damageByTarget.entrySet()) {
-            entry.getKey().hurtServer(
+            LivingEntity target = entry.getKey();
+
+            target.hurtServer(
                     level,
                     level.damageSources().playerAttack(user),
                     entry.getValue()
+            );
+
+            Vec3 hitPosition = hitPositionByTarget.getOrDefault(
+                    target,
+                    target.position()
+            );
+
+            level.playSound(
+                    null,
+                    hitPosition.x,
+                    hitPosition.y,
+                    hitPosition.z,
+                    SoundEvents.GENERIC_HURT,
+                    SoundSource.PLAYERS,
+                    0.8f,
+                    1.2f
             );
         }
 
@@ -160,6 +191,7 @@ public class ShotgunItem extends Item {
                 .inflate(1.0);
 
         LivingEntity closestTarget = null;
+        Vec3 closestHitPosition = null;
         double closestDistanceSquared = maxDistanceSquared;
 
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, searchBox, entity ->
@@ -174,23 +206,30 @@ public class ShotgunItem extends Item {
                 continue;
             }
 
-            double distanceSquared = start.distanceToSqr(hitPosition.get());
+            Vec3 currentHitPosition = hitPosition.get();
+            double distanceSquared = start.distanceToSqr(currentHitPosition);
 
             if (distanceSquared < closestDistanceSquared) {
                 closestDistanceSquared = distanceSquared;
                 closestTarget = entity;
+                closestHitPosition = currentHitPosition;
             }
         }
 
+        Optional<Vec3> blockImpact = blockHit.getType() == HitResult.Type.MISS
+                ? Optional.empty()
+                : Optional.of(blockHit.getLocation());
+
         if (closestTarget == null) {
-            return new PelletTrace(Optional.empty(), visualDistance);
+            return new PelletTrace(Optional.empty(), blockImpact, visualDistance);
         }
 
         double targetDistance = Math.sqrt(closestDistanceSquared);
 
-        // Если попали в entity, дорожку частиц рисуем до entity, а не дальше.
+        // Если попали в entity, дорожку частиц рисуем до entity, а block impact не показываем.
         return new PelletTrace(
-                Optional.of(new PelletHit(closestTarget, targetDistance)),
+                Optional.of(new PelletHit(closestTarget, closestHitPosition, targetDistance)),
+                Optional.empty(),
                 targetDistance
         );
     }
@@ -296,9 +335,56 @@ public class ShotgunItem extends Item {
         return forward.add(offset).normalize();
     }
 
-    private record PelletTrace(Optional<PelletHit> hit, double visualDistance) {
+    private void damageShotgun(ServerLevel level, ServerPlayer player, InteractionHand hand) {
+        if (player.getAbilities().instabuild) {
+            return;
+        }
+
+        ItemStack stack = player.getItemInHand(hand);
+
+        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND
+                ? EquipmentSlot.MAINHAND
+                : EquipmentSlot.OFFHAND;
+
+        stack.hurtAndBreak(
+                1,
+                level,
+                player,
+                item -> player.onEquippedItemBroken(item, slot)
+        );
     }
 
-    private record PelletHit(LivingEntity target, double distance) {
+    private void spawnEntityHitParticles(ServerLevel level, Vec3 position) {
+        level.sendParticles(
+                ParticleTypes.DAMAGE_INDICATOR,
+                position.x,
+                position.y,
+                position.z,
+                1,
+                0.05,
+                0.05,
+                0.05,
+                0.02
+        );
+    }
+
+    private void spawnBlockImpactParticles(ServerLevel level, Vec3 position) {
+        level.sendParticles(
+                ParticleTypes.POOF,
+                position.x,
+                position.y,
+                position.z,
+                1,
+                0.04,
+                0.04,
+                0.04,
+                0.01
+        );
+    }
+
+    private record PelletTrace(Optional<PelletHit> hit, Optional<Vec3> blockImpact, double visualDistance) {
+    }
+
+    private record PelletHit(LivingEntity target, Vec3 position, double distance) {
     }
 }

@@ -8,14 +8,13 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
-
 import java.util.function.Function;
 
 public class ModItems {
     public static final Item SHOTGUN = register(
             "shotgun",
             ShotgunItem::new,
-            new Item.Properties().stacksTo(1)
+            new Item.Properties().durability(600)
     );
 
     public static final Item SHOTGUN_SHELL = register(
