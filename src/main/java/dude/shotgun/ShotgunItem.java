@@ -1,11 +1,16 @@
 package dude.shotgun;
 
+import dude.shotgun.network.ShotgunRecoilPayload;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,9 +23,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NullMarked;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.sounds.SoundEvents;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +35,8 @@ public class ShotgunItem extends Item {
     private static final double RANGE = 16.0;
     private static final double SPREAD_DEGREES = 7.0;
 
-    // 8 pellets × 3 damage = 24 damage, то есть зомби вблизи должен умереть.
-    private static final float MAX_DAMAGE_PER_PELLET = 3.0f;
+    // 8 pellets × 4 damage = 24 damage, то есть зомби вблизи должен умереть.
+    private static final float MAX_DAMAGE_PER_PELLET = 4.0f;
     private static final float MIN_DAMAGE_MULTIPLIER = 0.15f;
 
     private static final int COOLDOWN_TICKS = 20;
@@ -70,9 +72,8 @@ public class ShotgunItem extends Item {
                     1.0f
             );
 
-            user.swing(hand, true);
-
             if (user instanceof ServerPlayer serverPlayer) {
+                ServerPlayNetworking.send(serverPlayer, new ShotgunRecoilPayload());
                 damageShotgun(serverLevel, serverPlayer, hand);
             }
         }

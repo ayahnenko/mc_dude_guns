@@ -3,8 +3,9 @@
 	"package": "dude.shotgun.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"ExampleClientMixin"
-	],
+		"ExampleClientMixin",
+        "ItemInHandRendererMixin"
+    ],
 	"injectors": {
 		"defaultRequire": 1
 	},

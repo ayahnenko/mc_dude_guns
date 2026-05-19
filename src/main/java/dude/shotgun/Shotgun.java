@@ -1,7 +1,8 @@
 package dude.shotgun;
 
+import dude.shotgun.network.ShotgunRecoilPayload;
 import net.fabricmc.api.ModInitializer;
-
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,11 @@ public class Shotgun implements ModInitializer {
 		// Proceed with mild caution.
 
 		LOGGER.info("Shotgun is initializing");
+
+        PayloadTypeRegistry.clientboundPlay().register(
+                ShotgunRecoilPayload.TYPE,
+                ShotgunRecoilPayload.CODEC
+        );
 
         ModItems.initialize();
         ModSounds.initialize();
