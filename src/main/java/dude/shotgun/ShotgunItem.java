@@ -1,0 +1,304 @@
+package dude.shotgun;
+
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.NullMarked;
+import net.minecraft.sounds.SoundSource;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
+@NullMarked
+public class ShotgunItem extends Item {
+    private static final int PELLET_COUNT = 12;
+    private static final double RANGE = 16.0;
+    private static final double SPREAD_DEGREES = 7.0;
+
+    // 8 pellets × 3 damage = 24 damage, то есть зомби вблизи должен умереть.
+    private static final float MAX_DAMAGE_PER_PELLET = 3.0f;
+    private static final float MIN_DAMAGE_MULTIPLIER = 0.15f;
+
+    private static final int COOLDOWN_TICKS = 20;
+
+    public ShotgunItem(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public InteractionResult use(Level level, Player user, InteractionHand hand) {
+        if (level.isClientSide()) {
+            return InteractionResult.PASS;
+        }
+
+        if (!consumeShell(user)) {
+            if (user instanceof ServerPlayer serverPlayer) {
+                serverPlayer.sendSystemMessage(Component.literal("No shotgun shells!"));
+            }
+
+            return InteractionResult.FAIL;
+        }
+
+        if (level instanceof ServerLevel serverLevel) {
+            fireShotgun(serverLevel, user);
+            serverLevel.playSound(
+                    null,
+                    user.getX(),
+                    user.getY(),
+                    user.getZ(),
+                    ModSounds.SHOTGUN_FIRE,
+                    SoundSource.PLAYERS,
+                    1.0f,
+                    1.0f
+            );
+        }
+
+        user.getCooldowns().addCooldown(user.getItemInHand(hand), COOLDOWN_TICKS);
+
+        return InteractionResult.SUCCESS;
+    }
+
+    private boolean consumeShell(Player user) {
+        // В creative не тратим патроны.
+        if (user.getAbilities().instabuild) {
+            return true;
+        }
+
+        Inventory inventory = user.getInventory();
+
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+
+            if (stack.is(ModItems.SHOTGUN_SHELL)) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void fireShotgun(ServerLevel level, Player user) {
+        Vec3 start = user.getEyePosition();
+        Vec3 baseDirection = user.getLookAngle().normalize();
+        Vec3 muzzleStart = getMuzzlePosition(user);
+
+        spawnMuzzleParticles(level, muzzleStart, baseDirection);
+
+        Map<LivingEntity, Float> damageByTarget = new HashMap<>();
+        int pelletHits = 0;
+
+        for (int i = 0; i < PELLET_COUNT; i++) {
+            Vec3 direction = randomDirectionInCone(baseDirection);
+            PelletTrace trace = tracePellet(level, user, start, direction);
+
+            spawnPelletTracers(level, start, direction, trace.visualDistance());
+            if (trace.hit().isEmpty()) {
+                continue;
+            }
+
+            PelletHit hit = trace.hit().get();
+            float damage = calculateDamage(hit.distance());
+
+            damageByTarget.merge(hit.target(), damage, Float::sum);
+            pelletHits++;
+        }
+
+        for (Map.Entry<LivingEntity, Float> entry : damageByTarget.entrySet()) {
+            entry.getKey().hurtServer(
+                    level,
+                    level.damageSources().playerAttack(user),
+                    entry.getValue()
+            );
+        }
+
+        Shotgun.LOGGER.info(
+                "Bang! Pellet hits: {}, targets hit: {}",
+                pelletHits,
+                damageByTarget.size()
+        );
+    }
+
+    private PelletTrace tracePellet(ServerLevel level, Player user, Vec3 start, Vec3 direction) {
+        Vec3 maxEnd = start.add(direction.scale(RANGE));
+
+        // Сначала проверяем блоки, чтобы дробь не летела сквозь стены.
+        BlockHitResult blockHit = level.clip(new ClipContext(
+                start,
+                maxEnd,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                user
+        ));
+
+        double maxDistanceSquared = RANGE * RANGE;
+        double visualDistance = RANGE;
+
+        if (blockHit.getType() != HitResult.Type.MISS) {
+            maxDistanceSquared = start.distanceToSqr(blockHit.getLocation());
+            visualDistance = Math.sqrt(maxDistanceSquared);
+        }
+
+        AABB searchBox = user.getBoundingBox()
+                .expandTowards(direction.scale(RANGE))
+                .inflate(1.0);
+
+        LivingEntity closestTarget = null;
+        double closestDistanceSquared = maxDistanceSquared;
+
+        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, searchBox, entity ->
+                entity != user
+                        && entity.isAlive()
+                        && entity.isPickable()
+        )) {
+            AABB hitBox = entity.getBoundingBox().inflate(entity.getPickRadius() + 0.25);
+            Optional<Vec3> hitPosition = hitBox.clip(start, maxEnd);
+
+            if (hitPosition.isEmpty()) {
+                continue;
+            }
+
+            double distanceSquared = start.distanceToSqr(hitPosition.get());
+
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closestTarget = entity;
+            }
+        }
+
+        if (closestTarget == null) {
+            return new PelletTrace(Optional.empty(), visualDistance);
+        }
+
+        double targetDistance = Math.sqrt(closestDistanceSquared);
+
+        // Если попали в entity, дорожку частиц рисуем до entity, а не дальше.
+        return new PelletTrace(
+                Optional.of(new PelletHit(closestTarget, targetDistance)),
+                targetDistance
+        );
+    }
+
+    private float calculateDamage(double distance) {
+        double distanceRatio = Math.clamp(distance / RANGE, 0.0, 1.0);
+
+        double multiplier = 1.0 - distanceRatio;
+        multiplier = Math.max(multiplier, MIN_DAMAGE_MULTIPLIER);
+
+        return (float) (MAX_DAMAGE_PER_PELLET * multiplier);
+    }
+
+    private Vec3 getMuzzlePosition(Player user) {
+        Vec3 eye = user.getEyePosition();
+        Vec3 forward = user.getLookAngle().normalize();
+
+        return eye
+                .add(forward.scale(0.8))  // чуть впереди игрока
+                .add(0.0, -0.45, 0.0);    // ниже глаз, примерно уровень рук/оружия
+    }
+
+    private void spawnMuzzleParticles(ServerLevel level, Vec3 muzzleStart, Vec3 direction) {
+        Vec3 front = muzzleStart.add(direction.scale(0.25));
+
+        // Короткая яркая вспышка у ствола.
+        level.sendParticles(
+                ParticleTypes.FLAME,
+                front.x,
+                front.y,
+                front.z,
+                2,
+                0.08,
+                0.08,
+                0.08,
+                0.02
+        );
+
+        // Жирный короткий дымок.
+        level.sendParticles(
+                ParticleTypes.POOF,
+                muzzleStart.x,
+                muzzleStart.y,
+                muzzleStart.z,
+                2,
+                0.12,
+                0.08,
+                0.12,
+                0.01
+        );
+    }
+
+    private void spawnPelletTracers(ServerLevel level, Vec3 start, Vec3 direction, double distanceLimit) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (double distance = 1.5; distance <= distanceLimit; distance += 2.5) {
+            // Трассеры редкие, чтобы не было стены дыма.
+            if (random.nextDouble() > 0.18) {
+                continue;
+            }
+
+            Vec3 pos = start.add(direction.scale(distance));
+
+            level.sendParticles(
+                    random.nextBoolean() ? ParticleTypes.CRIT : ParticleTypes.FIREWORK,
+                    pos.x,
+                    pos.y,
+                    pos.z,
+                    1,
+                    0.01,
+                    0.01,
+                    0.01,
+                    0.0
+            );
+        }
+    }
+
+    private Vec3 randomDirectionInCone(Vec3 forward) {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        double maxAngleRadians = Math.toRadians(ShotgunItem.SPREAD_DEGREES);
+
+        // sqrt нужен, чтобы распределение по площади конуса было ровнее,
+        // а не кучковалось в центре.
+        double radius = Math.tan(maxAngleRadians) * Math.sqrt(random.nextDouble());
+        double angle = random.nextDouble() * Math.PI * 2.0;
+
+        Vec3 worldUp = new Vec3(0.0, 1.0, 0.0);
+        Vec3 right = forward.cross(worldUp);
+
+        // Если игрок смотрит почти строго вверх/вниз, cross может стать почти нулём.
+        if (right.lengthSqr() < 1.0E-6) {
+            right = new Vec3(1.0, 0.0, 0.0);
+        } else {
+            right = right.normalize();
+        }
+
+        Vec3 up = right.cross(forward).normalize();
+
+        Vec3 offset = right.scale(Math.cos(angle) * radius)
+                .add(up.scale(Math.sin(angle) * radius));
+
+        return forward.add(offset).normalize();
+    }
+
+    private record PelletTrace(Optional<PelletHit> hit, double visualDistance) {
+    }
+
+    private record PelletHit(LivingEntity target, double distance) {
+    }
+}
