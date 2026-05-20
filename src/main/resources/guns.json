@@ -4,15 +4,17 @@
     "shellStackSize": 64,
     "pelletCount": 12,
     "range": 16.0,
-    "spreadDegrees": 7.0,
+    "spreadDegrees": 12.0,
     "maxDamagePerPellet": 4.0,
     "minDamageMultiplier": 0.15,
-    "cooldownTicks": 20,
+    "cooldownTicks": 32,
     "knockbackPerDamage": 0.04,
     "minKnockback": 0.25,
     "maxKnockback": 1.2,
     "maxTargetsPerPellet": 3,
-    "pierceDamageMultiplier": 0.55
+    "pierceDamageMultiplier": 0.55,
+    "breakFragileBlocks": true,
+    "dropBrokenFragileBlocks": false
   },
   "muzzleParticles": {
     "sparkCount": 4,

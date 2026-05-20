@@ -2,12 +2,14 @@ package dude.guns;
 
 import dude.guns.network.ShotgunRecoilPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -18,6 +20,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.StainedGlassBlock;
+import net.minecraft.world.level.block.StainedGlassPaneBlock;
+import net.minecraft.world.level.block.TintedGlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -33,6 +41,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @NullMarked
 public class ShotgunItem extends Item {
+    private static final double BLOCK_TRACE_STEP_EPSILON = 0.01;
+
     public ShotgunItem(Properties properties) {
         super(properties);
     }
@@ -191,23 +201,49 @@ public class ShotgunItem extends Item {
         ModConfig.Shotgun config = ModConfig.get().shotgun;
         Vec3 maxEnd = start.add(direction.scale(config.range));
 
-        // Сначала проверяем блоки, чтобы дробь не летела сквозь стены.
-        BlockHitResult blockHit = level.clip(new ClipContext(
-                start,
-                maxEnd,
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                user
-        ));
-
         double maxDistanceSquared = config.range * config.range;
         double visualDistance = config.range;
         Optional<Vec3> blockImpact = Optional.empty();
+        Vec3 blockTraceStart = start;
 
-        if (blockHit.getType() != HitResult.Type.MISS) {
-            maxDistanceSquared = start.distanceToSqr(blockHit.getLocation());
+        // Сначала проверяем блоки, чтобы дробь не летела сквозь стены.
+        // Хрупкие блоки пробиваются и не останавливают дробину.
+        while (true) {
+            BlockHitResult colliderHit = level.clip(new ClipContext(
+                    blockTraceStart,
+                    maxEnd,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    user
+            ));
+
+            BlockHitResult outlineHit = level.clip(new ClipContext(
+                    blockTraceStart,
+                    maxEnd,
+                    ClipContext.Block.OUTLINE,
+                    ClipContext.Fluid.NONE,
+                    user
+            ));
+
+            if (isHitBeforeCollider(start, outlineHit, colliderHit)
+                    && breakFragileBlock(level, user, outlineHit.getBlockPos())) {
+                blockTraceStart = outlineHit.getLocation().add(direction.scale(BLOCK_TRACE_STEP_EPSILON));
+                continue;
+            }
+
+            if (colliderHit.getType() == HitResult.Type.MISS) {
+                break;
+            }
+
+            if (breakFragileBlock(level, user, colliderHit.getBlockPos())) {
+                blockTraceStart = colliderHit.getLocation().add(direction.scale(BLOCK_TRACE_STEP_EPSILON));
+                continue;
+            }
+
+            maxDistanceSquared = start.distanceToSqr(colliderHit.getLocation());
             visualDistance = Math.sqrt(maxDistanceSquared);
-            blockImpact = Optional.of(blockHit.getLocation());
+            blockImpact = Optional.of(colliderHit.getLocation());
+            break;
         }
 
         AABB searchBox = user.getBoundingBox()
@@ -250,6 +286,54 @@ public class ShotgunItem extends Item {
         }
 
         return new PelletTrace(hits, blockImpact, visualDistance);
+    }
+
+    private boolean isHitBeforeCollider(Vec3 start, BlockHitResult outlineHit, BlockHitResult colliderHit) {
+        if (outlineHit.getType() == HitResult.Type.MISS) {
+            return false;
+        }
+
+        if (colliderHit.getType() == HitResult.Type.MISS) {
+            return true;
+        }
+
+        return start.distanceToSqr(outlineHit.getLocation()) <= start.distanceToSqr(colliderHit.getLocation());
+    }
+
+    private boolean breakFragileBlock(ServerLevel level, Player user, BlockPos pos) {
+        ModConfig.Shotgun config = ModConfig.get().shotgun;
+
+        if (!config.breakFragileBlocks) {
+            return false;
+        }
+
+        BlockState state = level.getBlockState(pos);
+
+        if (!isFragileShotgunBlock(state)) {
+            return false;
+        }
+
+        return level.destroyBlock(pos, config.dropBrokenFragileBlocks, user, 512);
+    }
+
+    private boolean isFragileShotgunBlock(BlockState state) {
+        Block block = state.getBlock();
+
+        return block == Blocks.GLASS
+                || block == Blocks.GLASS_PANE
+                || block instanceof StainedGlassBlock
+                || block instanceof StainedGlassPaneBlock
+                || block instanceof TintedGlassBlock
+                || state.is(BlockTags.LEAVES)
+                || state.is(BlockTags.FLOWERS)
+                || state.is(BlockTags.SAPLINGS)
+                || state.is(BlockTags.CROPS)
+                || state.is(BlockTags.CLIMBABLE)
+                || state.is(BlockTags.CAVE_VINES)
+                || state.is(BlockTags.CANDLES)
+                || state.is(BlockTags.FLOWER_POTS)
+                || state.is(BlockTags.CORALS)
+                || state.is(BlockTags.REPLACEABLE_BY_TREES);
     }
 
     private float calculateDamage(double distance) {

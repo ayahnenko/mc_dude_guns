@@ -73,15 +73,17 @@ public final class ModConfig {
         public int shellStackSize = 64;
         public int pelletCount = 12;
         public double range = 16.0;
-        public double spreadDegrees = 7.0;
+        public double spreadDegrees = 12.0;
         public float maxDamagePerPellet = 4.0f;
         public float minDamageMultiplier = 0.15f;
-        public int cooldownTicks = 20;
+        public int cooldownTicks = 32;
         public double knockbackPerDamage = 0.04;
         public double minKnockback = 0.25;
         public double maxKnockback = 1.2;
         public int maxTargetsPerPellet = 3;
         public float pierceDamageMultiplier = 0.55f;
+        public boolean breakFragileBlocks = true;
+        public boolean dropBrokenFragileBlocks = false;
 
         private void sanitize() {
             durability = Math.clamp(durability, 1, 4096);
