@@ -4,5 +4,11 @@
         "sounds": [
             "guns:shotgun_fire"
         ]
+    },
+    "shotgun_empty": {
+        "subtitle": "sound.guns.shotgun_empty",
+        "sounds": [
+            "guns:shotgun_empty"
+        ]
     }
 }

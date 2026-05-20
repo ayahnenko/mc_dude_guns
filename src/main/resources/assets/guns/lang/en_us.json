@@ -1,5 +1,6 @@
 {
     "item.guns.shotgun": "Shotgun",
     "item.guns.shotgun_shell": "Shotgun Shell",
-    "sound.guns.shotgun_fire": "Shotgun fires"
+    "sound.guns.shotgun_fire": "Shotgun fires",
+    "sound.guns.shotgun_empty": "Shotgun clicks"
 }

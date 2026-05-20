@@ -44,6 +44,17 @@ public class ShotgunItem extends Item {
         }
 
         if (!consumeShell(user)) {
+            level.playSound(
+                    null,
+                    user.getX(),
+                    user.getY(),
+                    user.getZ(),
+                    ModSounds.SHOTGUN_EMPTY,
+                    SoundSource.PLAYERS,
+                    0.8f,
+                    1.0f
+            );
+
             if (user instanceof ServerPlayer serverPlayer) {
                 serverPlayer.sendSystemMessage(Component.literal("No shotgun shells!"));
             }
