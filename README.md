@@ -1,4 +1,4 @@
-# Shotgun
+# Guns
 
 ## Setup
 

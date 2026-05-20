@@ -1,0 +1,31 @@
+{
+  "shotgun": {
+    "durability": 600,
+    "shellStackSize": 64,
+    "pelletCount": 12,
+    "range": 16.0,
+    "spreadDegrees": 7.0,
+    "maxDamagePerPellet": 4.0,
+    "minDamageMultiplier": 0.15,
+    "cooldownTicks": 20,
+    "knockbackPerDamage": 0.04,
+    "minKnockback": 0.25,
+    "maxKnockback": 1.2,
+    "maxTargetsPerPellet": 3,
+    "pierceDamageMultiplier": 0.55
+  },
+  "muzzleParticles": {
+    "sparkCount": 4,
+    "sparkSpread": 0.08,
+    "sparkSpeed": 0.03,
+    "smokeCount": 2,
+    "smokeSpreadX": 0.12,
+    "smokeSpreadY": 0.08,
+    "smokeSpreadZ": 0.12,
+    "smokeSpeed": 0.01
+  },
+  "muzzleLight": {
+    "lightLevel": 12,
+    "lifetimeTicks": 2
+  }
+}

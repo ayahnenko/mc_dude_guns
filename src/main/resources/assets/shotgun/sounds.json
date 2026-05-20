@@ -1,8 +1,0 @@
-{
-    "shotgun_fire": {
-        "subtitle": "sound.shotgun.shotgun_fire",
-        "sounds": [
-            "shotgun:shotgun_fire"
-        ]
-    }
-}

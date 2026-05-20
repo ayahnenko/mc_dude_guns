@@ -23,7 +23,7 @@ loom {
         }
     }
 	mods {
-		"shotgun" {
+		"guns" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}

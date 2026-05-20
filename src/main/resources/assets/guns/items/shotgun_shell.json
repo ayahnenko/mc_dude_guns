@@ -1,0 +1,6 @@
+{
+    "model": {
+        "type": "minecraft:model",
+        "model": "guns:item/shotgun_shell"
+    }
+}

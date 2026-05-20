@@ -1,31 +1,31 @@
 {
 	"schemaVersion": 1,
-	"id": "shotgun",
-	"version": "${version}",
-	"name": "Shotgun",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"id": "guns",
+	"version": "1.0.0+26.1",
+	"name": "Guns",
+	"description": "Give 'em hell!",
 	"authors": [
-		"Borodality"
+		"The Borodality Dude"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/shotgun/icon.png",
+	"icon": "assets/guns/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"dude.shotgun.Shotgun"
+			"dude.guns.Guns"
 		],
 		"client": [
-			"dude.shotgun.client.ShotgunClient"
+			"dude.guns.client.GunsClient"
 		]
 	},
 	"mixins": [
-		"shotgun.mixins.json",
+		"guns.mixins.json",
 		{
-			"config": "shotgun.client.mixins.json",
+			"config": "guns.client.mixins.json",
 			"environment": "client"
 		}
 	],
