@@ -16,6 +16,7 @@ public final class ModConfig {
     private static ModConfig INSTANCE = new ModConfig();
 
     public Shotgun shotgun = new Shotgun();
+    public SniperRifle sniperRifle = new SniperRifle();
     public MuzzleParticles muzzleParticles = new MuzzleParticles();
     public MuzzleLight muzzleLight = new MuzzleLight();
 
@@ -59,11 +60,16 @@ public final class ModConfig {
             muzzleParticles = new MuzzleParticles();
         }
 
+        if (sniperRifle == null) {
+            sniperRifle = new SniperRifle();
+        }
+
         if (muzzleLight == null) {
             muzzleLight = new MuzzleLight();
         }
 
         shotgun.sanitize();
+        sniperRifle.sanitize();
         muzzleParticles.sanitize();
         muzzleLight.sanitize();
     }
@@ -121,6 +127,24 @@ public final class ModConfig {
             smokeSpreadY = Math.clamp(smokeSpreadY, 0.0, 2.0);
             smokeSpreadZ = Math.clamp(smokeSpreadZ, 0.0, 2.0);
             smokeSpeed = Math.clamp(smokeSpeed, 0.0, 2.0);
+        }
+    }
+
+    public static final class SniperRifle {
+        public int durability = 256;
+        public float zoomFovMultiplier = 0.25f;
+        public float zoomStep = 0.25f;
+        public double range = 64.0;
+        public float damage = 18.0f;
+        public int cooldownTicks = 30;
+
+        private void sanitize() {
+            durability = Math.clamp(durability, 1, 4096);
+            zoomFovMultiplier = Math.clamp(zoomFovMultiplier, 0.05f, 1.0f);
+            zoomStep = Math.clamp(zoomStep, 0.01f, 1.0f);
+            range = Math.clamp(range, 1.0, 256.0);
+            damage = Math.clamp(damage, 0.0f, 100.0f);
+            cooldownTicks = Math.clamp(cooldownTicks, 0, 20 * 60);
         }
     }
 

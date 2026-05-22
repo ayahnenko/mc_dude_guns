@@ -3,7 +3,13 @@
 	"package": "dude.guns.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-        "ItemInHandRendererMixin"
+        "ItemInHandRendererMixin",
+        "CameraMixin",
+        "ClientInputAccessor",
+        "MouseHandlerMixin",
+        "KeyboardInputMixin",
+        "GuiMixin",
+        "MinecraftMixin"
     ],
 	"injectors": {
 		"defaultRequire": 1

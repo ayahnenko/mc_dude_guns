@@ -16,6 +16,14 @@
     "breakFragileBlocks": true,
     "dropBrokenFragileBlocks": false
   },
+  "sniperRifle": {
+    "durability": 450,
+    "zoomFovMultiplier": 0.25,
+    "zoomStep": 0.25,
+    "range": 128.0,
+    "damage": 24.0,
+    "cooldownTicks": 30
+  },
   "muzzleParticles": {
     "sparkCount": 4,
     "sparkSpread": 0.08,

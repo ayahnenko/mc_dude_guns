@@ -1,8 +1,10 @@
 package dude.guns;
 
 import dude.guns.network.ShotgunRecoilPayload;
+import dude.guns.network.SniperFirePayload;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,15 @@ public class Guns implements ModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(
                 ShotgunRecoilPayload.TYPE,
                 ShotgunRecoilPayload.CODEC
+        );
+
+        PayloadTypeRegistry.serverboundPlay().register(
+                SniperFirePayload.TYPE,
+                SniperFirePayload.CODEC
+        );
+
+        ServerPlayNetworking.registerGlobalReceiver(SniperFirePayload.TYPE, (_, context) ->
+                context.server().execute(() -> SniperRifleItem.fireFromPacket(context.player()))
         );
 
         ModItems.initialize();

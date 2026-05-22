@@ -3,6 +3,7 @@ package dude.guns.client.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dude.guns.ModItems;
 import dude.guns.client.ShotgunRecoilState;
+import dude.guns.client.SniperAimState;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -21,7 +22,7 @@ public class ItemInHandRendererMixin {
     @Unique
     private boolean shotgun$recoilPosePushed = false;
 
-    @Inject(method = "renderArmWithItem", at = @At("HEAD"))
+    @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void shotgun$applyRecoilTransform(
             AbstractClientPlayer player,
             float frameInterp,
@@ -36,6 +37,11 @@ public class ItemInHandRendererMixin {
             CallbackInfo ci
     ) {
         shotgun$recoilPosePushed = false;
+
+        if (itemStack.is(ModItems.SNIPER_RIFLE) && SniperAimState.isActive()) {
+            ci.cancel();
+            return;
+        }
 
         if (!itemStack.is(ModItems.SHOTGUN)) {
             return;
