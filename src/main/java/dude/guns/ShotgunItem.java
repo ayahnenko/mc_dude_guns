@@ -12,12 +12,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -53,10 +50,13 @@ public class ShotgunItem extends Item {
             return InteractionResult.PASS;
         }
 
-        if (!consumeShell(user)) {
-            user.getCooldowns().addCooldown(
+        ModConfig.Shotgun config = ModConfig.get().shotgun;
+
+        if (!WeaponAmmo.consumeAmmo(user, config.usesAmmo, ModItems.SHOTGUN_SHELL)) {
+            WeaponCooldowns.startEmpty(
+                    user,
                     user.getItemInHand(hand),
-                    ModConfig.get().shotgun.emptyCooldownTicks
+                    config.emptyCooldownTicks
             );
 
             level.playSound(
@@ -92,11 +92,11 @@ public class ShotgunItem extends Item {
 
             if (user instanceof ServerPlayer serverPlayer) {
                 ServerPlayNetworking.send(serverPlayer, new ShotgunRecoilPayload());
-                damageShotgun(serverLevel, serverPlayer, hand);
+                WeaponDurability.hurtHeldItem(serverLevel, serverPlayer, hand, 1);
             }
         }
 
-        user.getCooldowns().addCooldown(user.getItemInHand(hand), ModConfig.get().shotgun.cooldownTicks);
+        WeaponCooldowns.start(user, user.getItemInHand(hand), config.cooldownTicks);
 
         return InteractionResult.SUCCESS;
     }
@@ -180,26 +180,6 @@ public class ShotgunItem extends Item {
                 pelletHits,
                 damageByTarget.size()
         );
-    }
-
-    private boolean consumeShell(Player user) {
-        // В creative не тратим патроны.
-        if (user.getAbilities().instabuild) {
-            return true;
-        }
-
-        Inventory inventory = user.getInventory();
-
-        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            ItemStack stack = inventory.getItem(slot);
-
-            if (stack.is(ModItems.SHOTGUN_SHELL)) {
-                stack.shrink(1);
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private PelletTrace tracePellet(ServerLevel level, Player user, Vec3 start, Vec3 direction) {
@@ -415,25 +395,6 @@ public class ShotgunItem extends Item {
                 .add(up.scale(Math.sin(angle) * radius));
 
         return forward.add(offset).normalize();
-    }
-
-    private void damageShotgun(ServerLevel level, ServerPlayer player, InteractionHand hand) {
-        if (player.getAbilities().instabuild) {
-            return;
-        }
-
-        ItemStack stack = player.getItemInHand(hand);
-
-        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND
-                ? EquipmentSlot.MAINHAND
-                : EquipmentSlot.OFFHAND;
-
-        stack.hurtAndBreak(
-                1,
-                level,
-                player,
-                item -> player.onEquippedItemBroken(item, slot)
-        );
     }
 
     private void spawnEntityHitParticles(ServerLevel level, Vec3 position) {

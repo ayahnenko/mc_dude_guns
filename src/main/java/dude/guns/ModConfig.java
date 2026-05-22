@@ -76,6 +76,7 @@ public final class ModConfig {
 
     public static final class Shotgun {
         public int durability = 600;
+        public boolean usesAmmo = true;
         public int shellStackSize = 64;
         public int pelletCount = 12;
         public double range = 16.0;
@@ -134,6 +135,7 @@ public final class ModConfig {
 
     public static final class SniperRifle {
         public int durability = 256;
+        public boolean usesAmmo = true;
         public int roundStackSize = 32;
         public float zoomFovMultiplier = 0.25f;
         public float zoomStep = 0.25f;

@@ -1,6 +1,7 @@
 {
   "shotgun": {
     "durability": 600,
+    "usesAmmo": true,
     "shellStackSize": 64,
     "pelletCount": 12,
     "range": 16.0,
@@ -19,6 +20,7 @@
   },
   "sniperRifle": {
     "durability": 450,
+    "usesAmmo": true,
     "roundStackSize": 32,
     "zoomFovMultiplier": 0.25,
     "zoomStep": 0.25,

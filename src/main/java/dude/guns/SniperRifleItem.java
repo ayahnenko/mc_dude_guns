@@ -6,9 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -40,12 +38,14 @@ public class SniperRifleItem extends Item {
 
         ItemStack stack = player.getItemInHand(hand);
 
-        if (player.getCooldowns().isOnCooldown(stack)) {
+        ModConfig.SniperRifle config = ModConfig.get().sniperRifle;
+
+        if (WeaponCooldowns.isCoolingDown(player, stack)) {
             return;
         }
 
-        if (!consumeRound(player)) {
-            player.getCooldowns().addCooldown(stack, ModConfig.get().sniperRifle.emptyCooldownTicks);
+        if (!WeaponAmmo.consumeAmmo(player, config.usesAmmo, ModItems.SNIPER_ROUND)) {
+            WeaponCooldowns.startEmpty(player, stack, config.emptyCooldownTicks);
 
             level.playSound(
                     null,
@@ -61,8 +61,8 @@ public class SniperRifleItem extends Item {
         }
 
         fire(level, player);
-        damageRifle(level, player, stack, hand);
-        player.getCooldowns().addCooldown(stack, ModConfig.get().sniperRifle.cooldownTicks);
+        WeaponDurability.hurtItem(level, player, stack, hand, 1);
+        WeaponCooldowns.start(player, stack, config.cooldownTicks);
     }
 
     private static void fire(ServerLevel level, ServerPlayer player) {
@@ -143,25 +143,6 @@ public class SniperRifleItem extends Item {
         );
     }
 
-    private static boolean consumeRound(ServerPlayer player) {
-        if (player.getAbilities().instabuild) {
-            return true;
-        }
-
-        Inventory inventory = player.getInventory();
-
-        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            ItemStack stack = inventory.getItem(slot);
-
-            if (stack.is(ModItems.SNIPER_ROUND)) {
-                stack.shrink(1);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static Optional<SniperHit> findEntityHit(
             ServerLevel level,
             ServerPlayer player,
@@ -211,28 +192,6 @@ public class SniperRifleItem extends Item {
         }
 
         return null;
-    }
-
-    private static void damageRifle(
-            ServerLevel level,
-            ServerPlayer player,
-            ItemStack stack,
-            InteractionHand hand
-    ) {
-        if (player.getAbilities().instabuild) {
-            return;
-        }
-
-        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND
-                ? EquipmentSlot.MAINHAND
-                : EquipmentSlot.OFFHAND;
-
-        stack.hurtAndBreak(
-                1,
-                level,
-                player,
-                item -> player.onEquippedItemBroken(item, slot)
-        );
     }
 
     private record SniperHit(LivingEntity target, Vec3 position, double distanceSquared) {
