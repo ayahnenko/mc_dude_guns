@@ -54,6 +54,11 @@ public class ShotgunItem extends Item {
         }
 
         if (!consumeShell(user)) {
+            user.getCooldowns().addCooldown(
+                    user.getItemInHand(hand),
+                    ModConfig.get().shotgun.emptyCooldownTicks
+            );
+
             level.playSound(
                     null,
                     user.getX(),

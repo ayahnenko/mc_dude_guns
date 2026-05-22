@@ -1,0 +1,15 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "SS",
+        "CC"
+    ],
+    "key": {
+        "S": "minecraft:iron_ingot",
+        "C": "minecraft:copper_ingot"
+    },
+    "result": {
+        "id": "guns:sniper_round",
+        "count": 16
+    }
+}

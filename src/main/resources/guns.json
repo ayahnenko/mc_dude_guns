@@ -8,6 +8,7 @@
     "maxDamagePerPellet": 4.0,
     "minDamageMultiplier": 0.15,
     "cooldownTicks": 32,
+    "emptyCooldownTicks": 20,
     "knockbackPerDamage": 0.04,
     "minKnockback": 0.25,
     "maxKnockback": 1.2,
@@ -18,11 +19,13 @@
   },
   "sniperRifle": {
     "durability": 450,
+    "roundStackSize": 32,
     "zoomFovMultiplier": 0.25,
     "zoomStep": 0.25,
     "range": 128.0,
     "damage": 24.0,
-    "cooldownTicks": 30
+    "cooldownTicks": 30,
+    "emptyCooldownTicks": 20
   },
   "muzzleParticles": {
     "sparkCount": 4,

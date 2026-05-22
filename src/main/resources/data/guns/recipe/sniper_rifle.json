@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "SSG",
+        "WWC"
+    ],
+    "key": {
+        "S": "minecraft:iron_ingot",
+        "G": "minecraft:glass",
+        "W": "#minecraft:planks",
+        "C": "minecraft:copper_ingot"
+    },
+    "result": {
+        "id": "guns:sniper_rifle",
+        "count": 1
+    }
+}

@@ -83,6 +83,7 @@ public final class ModConfig {
         public float maxDamagePerPellet = 4.0f;
         public float minDamageMultiplier = 0.15f;
         public int cooldownTicks = 32;
+        public int emptyCooldownTicks = 20;
         public double knockbackPerDamage = 0.04;
         public double minKnockback = 0.25;
         public double maxKnockback = 1.2;
@@ -100,6 +101,7 @@ public final class ModConfig {
             maxDamagePerPellet = Math.clamp(maxDamagePerPellet, 0.0f, 100.0f);
             minDamageMultiplier = Math.clamp(minDamageMultiplier, 0.0f, 1.0f);
             cooldownTicks = Math.clamp(cooldownTicks, 0, 20 * 60);
+            emptyCooldownTicks = Math.clamp(emptyCooldownTicks, 0, 20 * 60);
             knockbackPerDamage = Math.clamp(knockbackPerDamage, 0.0, 10.0);
             minKnockback = Math.clamp(minKnockback, 0.0, 10.0);
             maxKnockback = Math.clamp(maxKnockback, minKnockback, 10.0);
@@ -132,19 +134,23 @@ public final class ModConfig {
 
     public static final class SniperRifle {
         public int durability = 256;
+        public int roundStackSize = 32;
         public float zoomFovMultiplier = 0.25f;
         public float zoomStep = 0.25f;
         public double range = 64.0;
         public float damage = 18.0f;
         public int cooldownTicks = 30;
+        public int emptyCooldownTicks = 20;
 
         private void sanitize() {
             durability = Math.clamp(durability, 1, 4096);
+            roundStackSize = Math.clamp(roundStackSize, 1, 99);
             zoomFovMultiplier = Math.clamp(zoomFovMultiplier, 0.05f, 1.0f);
             zoomStep = Math.clamp(zoomStep, 0.01f, 1.0f);
             range = Math.clamp(range, 1.0, 256.0);
             damage = Math.clamp(damage, 0.0f, 100.0f);
             cooldownTicks = Math.clamp(cooldownTicks, 0, 20 * 60);
+            emptyCooldownTicks = Math.clamp(emptyCooldownTicks, 0, 20 * 60);
         }
     }
 

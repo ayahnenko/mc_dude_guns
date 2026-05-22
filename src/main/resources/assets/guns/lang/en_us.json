@@ -2,6 +2,7 @@
     "item.guns.shotgun": "Shotgun",
     "item.guns.shotgun_shell": "Shotgun Shell",
     "item.guns.sniper_rifle": "Sniper Rifle",
+    "item.guns.sniper_round": "Sniper Round",
     "sound.guns.shotgun_fire": "Shotgun fires",
     "sound.guns.shotgun_empty": "Shotgun clicks"
 }

@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -40,6 +41,22 @@ public class SniperRifleItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
 
         if (player.getCooldowns().isOnCooldown(stack)) {
+            return;
+        }
+
+        if (!consumeRound(player)) {
+            player.getCooldowns().addCooldown(stack, ModConfig.get().sniperRifle.emptyCooldownTicks);
+
+            level.playSound(
+                    null,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    ModSounds.SHOTGUN_EMPTY,
+                    SoundSource.PLAYERS,
+                    0.8f,
+                    1.0f
+            );
             return;
         }
 
@@ -124,6 +141,25 @@ public class SniperRifleItem extends Item {
                 0.04,
                 0.01
         );
+    }
+
+    private static boolean consumeRound(ServerPlayer player) {
+        if (player.getAbilities().instabuild) {
+            return true;
+        }
+
+        Inventory inventory = player.getInventory();
+
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+
+            if (stack.is(ModItems.SNIPER_ROUND)) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static Optional<SniperHit> findEntityHit(

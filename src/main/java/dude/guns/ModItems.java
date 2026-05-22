@@ -29,6 +29,12 @@ public class ModItems {
             new Item.Properties().durability(ModConfig.get().sniperRifle.durability)
     );
 
+    public static final Item SNIPER_ROUND = register(
+            "sniper_round",
+            Item::new,
+            new Item.Properties().stacksTo(ModConfig.get().sniperRifle.roundStackSize)
+    );
+
     public static <T extends Item> T register(
             String name,
             Function<Item.Properties, T> itemFactory,
@@ -54,6 +60,7 @@ public class ModItems {
                     creativeTab.accept(ModItems.SHOTGUN);
                     creativeTab.accept(ModItems.SHOTGUN_SHELL);
                     creativeTab.accept(ModItems.SNIPER_RIFLE);
+                    creativeTab.accept(ModItems.SNIPER_ROUND);
                 });
     }
 }
