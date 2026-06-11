@@ -29,6 +29,19 @@
     "cooldownTicks": 30,
     "emptyCooldownTicks": 20
   },
+  "machineGun": {
+    "durability": 900,
+    "usesAmmo": true,
+    "roundStackSize": 128,
+    "zoomFovMultiplier": 0.8,
+    "zoomStep": 0.25,
+    "movementMultiplier": 0.55,
+    "range": 72.0,
+    "spreadDegrees": 3.0,
+    "damage": 8.0,
+    "cooldownTicks": 2,
+    "emptyCooldownTicks": 10
+  },
   "muzzleParticles": {
     "sparkCount": 4,
     "sparkSpread": 0.08,

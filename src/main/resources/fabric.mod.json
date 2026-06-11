@@ -3,7 +3,7 @@
 	"id": "guns",
 	"version": "${version}+26.1",
 	"name": "Guns",
-	"description": "Adds a shotgun, sniper rifle, and ammunition.",
+	"description": "Adds a shotgun, sniper rifle, machine gun, and ammunition.",
 	"authors": [
 		"The Borodality Dude"
 	],

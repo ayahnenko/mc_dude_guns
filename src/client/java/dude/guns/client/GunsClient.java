@@ -11,6 +11,8 @@ public class GunsClient implements ClientModInitializer {
 	public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(_ -> ShotgunRecoilState.tick());
         ClientTickEvents.END_CLIENT_TICK.register(SniperAimState::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(MachineGunAimState::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(MachineGunSpinState::tick);
         SniperScopeOverlay.initialize();
 
         ClientPlayNetworking.registerGlobalReceiver(ShotgunRecoilPayload.TYPE, (_, context) -> {

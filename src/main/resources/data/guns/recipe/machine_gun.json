@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "III",
+        "CWC",
+        " W "
+    ],
+    "key": {
+        "I": "minecraft:iron_ingot",
+        "C": "minecraft:copper_ingot",
+        "W": "#minecraft:planks"
+    },
+    "result": {
+        "id": "guns:machine_gun",
+        "count": 1
+    }
+}

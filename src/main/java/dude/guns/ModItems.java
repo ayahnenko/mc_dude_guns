@@ -35,6 +35,18 @@ public class ModItems {
             new Item.Properties().stacksTo(ModConfig.get().sniperRifle.roundStackSize)
     );
 
+    public static final Item MACHINE_GUN = register(
+            "machine_gun",
+            MachineGunItem::new,
+            new Item.Properties().durability(ModConfig.get().machineGun.durability)
+    );
+
+    public static final Item MACHINE_GUN_ROUND = register(
+            "machine_gun_round",
+            Item::new,
+            new Item.Properties().stacksTo(ModConfig.get().machineGun.roundStackSize)
+    );
+
     public static <T extends Item> T register(
             String name,
             Function<Item.Properties, T> itemFactory,
@@ -61,6 +73,8 @@ public class ModItems {
                     creativeTab.accept(ModItems.SHOTGUN_SHELL);
                     creativeTab.accept(ModItems.SNIPER_RIFLE);
                     creativeTab.accept(ModItems.SNIPER_ROUND);
+                    creativeTab.accept(ModItems.MACHINE_GUN);
+                    creativeTab.accept(ModItems.MACHINE_GUN_ROUND);
                 });
     }
 }

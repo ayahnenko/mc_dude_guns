@@ -17,6 +17,7 @@ public final class ModConfig {
 
     public Shotgun shotgun = new Shotgun();
     public SniperRifle sniperRifle = new SniperRifle();
+    public MachineGun machineGun = new MachineGun();
     public MuzzleParticles muzzleParticles = new MuzzleParticles();
     public MuzzleLight muzzleLight = new MuzzleLight();
 
@@ -64,12 +65,17 @@ public final class ModConfig {
             sniperRifle = new SniperRifle();
         }
 
+        if (machineGun == null) {
+            machineGun = new MachineGun();
+        }
+
         if (muzzleLight == null) {
             muzzleLight = new MuzzleLight();
         }
 
         shotgun.sanitize();
         sniperRifle.sanitize();
+        machineGun.sanitize();
         muzzleParticles.sanitize();
         muzzleLight.sanitize();
     }
@@ -150,6 +156,33 @@ public final class ModConfig {
             zoomFovMultiplier = Math.clamp(zoomFovMultiplier, 0.05f, 1.0f);
             zoomStep = Math.clamp(zoomStep, 0.01f, 1.0f);
             range = Math.clamp(range, 1.0, 256.0);
+            damage = Math.clamp(damage, 0.0f, 100.0f);
+            cooldownTicks = Math.clamp(cooldownTicks, 0, 20 * 60);
+            emptyCooldownTicks = Math.clamp(emptyCooldownTicks, 0, 20 * 60);
+        }
+    }
+
+    public static final class MachineGun {
+        public int durability = 900;
+        public boolean usesAmmo = true;
+        public int roundStackSize = 128;
+        public float zoomFovMultiplier = 0.8f;
+        public float zoomStep = 0.25f;
+        public float movementMultiplier = 0.55f;
+        public double range = 72.0;
+        public double spreadDegrees = 3.0;
+        public float damage = 5.0f;
+        public int cooldownTicks = 3;
+        public int emptyCooldownTicks = 10;
+
+        private void sanitize() {
+            durability = Math.clamp(durability, 1, 4096);
+            roundStackSize = Math.clamp(roundStackSize, 1, 128);
+            zoomFovMultiplier = Math.clamp(zoomFovMultiplier, 0.5f, 1.0f);
+            zoomStep = Math.clamp(zoomStep, 0.01f, 1.0f);
+            movementMultiplier = Math.clamp(movementMultiplier, 0.1f, 1.0f);
+            range = Math.clamp(range, 1.0, 256.0);
+            spreadDegrees = Math.clamp(spreadDegrees, 0.0, 45.0);
             damage = Math.clamp(damage, 0.0f, 100.0f);
             cooldownTicks = Math.clamp(cooldownTicks, 0, 20 * 60);
             emptyCooldownTicks = Math.clamp(emptyCooldownTicks, 0, 20 * 60);

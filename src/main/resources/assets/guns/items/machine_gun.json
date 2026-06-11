@@ -1,0 +1,19 @@
+{
+    "model": {
+        "type": "minecraft:range_dispatch",
+        "entries": [
+            {
+                "model": {
+                    "type": "minecraft:model",
+                    "model": "guns:item/machine_gun_spin"
+                },
+                "threshold": 1.0
+            }
+        ],
+        "fallback": {
+            "type": "minecraft:model",
+            "model": "guns:item/machine_gun"
+        },
+        "property": "minecraft:custom_model_data"
+    }
+}

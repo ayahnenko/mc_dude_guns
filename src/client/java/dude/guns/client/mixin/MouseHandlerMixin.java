@@ -1,5 +1,6 @@
 package dude.guns.client.mixin;
 
+import dude.guns.client.MachineGunAimState;
 import dude.guns.client.SniperAimState;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.player.LocalPlayer;
@@ -35,6 +36,10 @@ public class MouseHandlerMixin {
 
     private static double scaleSniperMouse(double value) {
         if (!SniperAimState.isActive()) {
+            if (MachineGunAimState.isActive()) {
+                return value * MachineGunAimState.getMouseSensitivityMultiplier();
+            }
+
             return value;
         }
 
